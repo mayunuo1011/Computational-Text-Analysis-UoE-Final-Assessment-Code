@@ -1,0 +1,886 @@
+---
+title: "cta work"
+output:
+  word_document: default
+  html_document: default
+date: "2026-04-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Load packages
+
+library(tidyverse)   # data wrangling
+library(stringr)     # string manipulation
+library(psych)       # factor analysis
+library(lme4)        # mixed-effects models
+library(lmerTest)    # significance tests for lmer
+library(emmeans)     # post-hoc comparisons
+library(ggplot2)     # visualization
+library(data.table) # read csv
+```
+```{r}
+#load data and get sample 
+
+## Prep Osnabrugge et al. - after downloading the dataset (see instructions above), check where you have stored in on your computer and include the path to the data in the code below.
+# I have given you the example with the path on my own computer, but you will need to change it.
+data = fread("C:/Users/86133/Downloads/uk_data.csv", encoding="UTF-8")
+
+
+data$date = as.Date(data$date)
+
+
+#Table 2: Examples: Emotive and neutral speeches
+example1 = subset(data, id_speech==854597)
+example1$emotive_rhetoric
+example1$text
+
+example2 = subset(data, id_speech==778143)
+example2$emotive_rhetoric
+example2$text
+
+#Create time variable
+data$time= NA
+data$time[data$date>=as.Date("2001-01-01") & data$date<=as.Date("2001-06-30")] = "01/1"
+data$time[data$date>=as.Date("2001-07-01") & data$date<=as.Date("2001-12-31")] = "01/2"
+data$time[data$date>=as.Date("2002-01-01") & data$date<=as.Date("2002-06-30")] = "02/1"
+data$time[data$date>=as.Date("2002-07-01") & data$date<=as.Date("2002-12-31")] = "02/2"
+data$time[data$date>=as.Date("2003-01-01") & data$date<=as.Date("2003-06-30")] = "03/1"
+data$time[data$date>=as.Date("2003-07-01") & data$date<=as.Date("2003-12-31")] = "03/2"
+data$time[data$date>=as.Date("2004-01-01") & data$date<=as.Date("2004-06-30")] = "04/1"
+data$time[data$date>=as.Date("2004-07-01") & data$date<=as.Date("2004-12-31")] = "04/2"
+data$time[data$date>=as.Date("2005-01-01") & data$date<=as.Date("2005-06-30")] = "05/1"
+data$time[data$date>=as.Date("2005-07-01") & data$date<=as.Date("2005-12-31")] = "05/2"
+data$time[data$date>=as.Date("2006-01-01") & data$date<=as.Date("2006-06-30")] = "06/1"
+data$time[data$date>=as.Date("2006-07-01") & data$date<=as.Date("2006-12-31")] = "06/2"
+data$time[data$date>=as.Date("2007-01-01") & data$date<=as.Date("2007-06-30")] = "07/1"
+data$time[data$date>=as.Date("2007-07-01") & data$date<=as.Date("2007-12-31")] = "07/2"
+data$time[data$date>=as.Date("2008-01-01") & data$date<=as.Date("2008-06-30")] = "08/1"
+data$time[data$date>=as.Date("2008-07-01") & data$date<=as.Date("2008-12-31")] = "08/2"
+data$time[data$date>=as.Date("2009-01-01") & data$date<=as.Date("2009-06-30")] = "09/1"
+data$time[data$date>=as.Date("2009-07-01") & data$date<=as.Date("2009-12-31")] = "09/2"
+data$time[data$date>=as.Date("2010-01-01") & data$date<=as.Date("2010-06-30")] = "10/1"
+data$time[data$date>=as.Date("2010-07-01") & data$date<=as.Date("2010-12-31")] = "10/2"
+data$time[data$date>=as.Date("2011-01-01") & data$date<=as.Date("2011-06-30")] = "11/1"
+data$time[data$date>=as.Date("2011-07-01") & data$date<=as.Date("2011-12-31")] = "11/2"
+data$time[data$date>=as.Date("2012-01-01") & data$date<=as.Date("2012-06-30")] = "12/1"
+data$time[data$date>=as.Date("2012-07-01") & data$date<=as.Date("2012-12-31")] = "12/2"
+data$time[data$date>=as.Date("2013-01-01") & data$date<=as.Date("2013-06-30")] = "13/1"
+data$time[data$date>=as.Date("2013-07-01") & data$date<=as.Date("2013-12-31")] = "13/2"
+data$time[data$date>=as.Date("2014-01-01") & data$date<=as.Date("2014-06-30")] = "14/1"
+data$time[data$date>=as.Date("2014-07-01") & data$date<=as.Date("2014-12-31")] = "14/2"
+data$time[data$date>=as.Date("2015-01-01") & data$date<=as.Date("2015-06-30")] = "15/1"
+data$time[data$date>=as.Date("2015-07-01") & data$date<=as.Date("2015-12-31")] = "15/2"
+data$time[data$date>=as.Date("2016-01-01") & data$date<=as.Date("2016-06-30")] = "16/1"
+data$time[data$date>=as.Date("2016-07-01") & data$date<=as.Date("2016-12-31")] = "16/2"
+data$time[data$date>=as.Date("2017-01-01") & data$date<=as.Date("2017-06-30")] = "17/1"
+data$time[data$date>=as.Date("2017-07-01") & data$date<=as.Date("2017-12-31")] = "17/2"
+data$time[data$date>=as.Date("2018-01-01") & data$date<=as.Date("2018-06-30")] = "18/1"
+data$time[data$date>=as.Date("2018-07-01") & data$date<=as.Date("2018-12-31")] = "18/2"
+data$time[data$date>=as.Date("2019-01-01") & data$date<=as.Date("2019-06-30")] = "19/1"
+data$time[data$date>=as.Date("2019-07-01") & data$date<=as.Date("2019-12-31")] = "19/2"
+
+data$time2 = data$time
+data$time2 = str_replace(data$time2, "/", "_")
+
+data$stage = 0
+data$stage[data$m_questions==1]= 1
+data$stage[data$u_questions==1]= 2
+data$stage[data$queen_debate_others==1]= 3
+data$stage[data$queen_debate_day1==1]= 4
+data$stage[data$pm_questions==1]= 5
+
+set.seed(13)
+data_samp <- data %>% sample_n(100000)#Set seed for reproducibility, sample 100,000 rows
+saveRDS(data_samp, "data_samp.rds")# so i dont have to run it over and over again every time i restart R
+```
+```{r}
+# preprocessing:distribution of values)
+# create occasion variable because the original form they are all 0/1 variables
+temp_check <- data_samp %>%
+  mutate(occasion_temp = case_when(
+    pm_questions == 1                                  ~ "PMQs",
+    m_questions == 1                                   ~ "Ministerial_Qs",
+    u_questions == 1                                   ~ "Urgent_Qs",
+    queen_debate_day1 == 1                            ~ "queen_Speech_day1",
+    queen_debate_others == 1                           ~ "queen_Speech_others",
+    other_debate == 1                                  ~ "other_debate",
+    TRUE                                               ~ NA_character_
+  )) %>%
+
+  # create role variable; reason is same as above
+  mutate(role_temp = case_when(
+    prime_minister == 1                      ~ "PM",
+    cabinet == 1 | senior_minister == 1      ~ "Minister",
+    shadow == 1                              ~ "Shadow",
+    chair == 1                               ~ "Chair",
+    leader == 1                              ~ "Leader",
+    TRUE                                     ~ "Backbencher"
+  ))
+
+
+# Full party * occasion table
+cat("Distribution party × occasion\n")#so i know what the result is about
+temp_check %>%
+  filter(!is.na(occasion_temp), occasion_temp != "other_debate") %>% #drop na and other_debate because its not included in the study
+  count(party, occasion_temp) %>% #count the amount of text group by occasion and party 
+  pivot_wider(names_from = occasion_temp, values_from = n, values_fill = 0) %>%
+  mutate(party_total = rowSums(across(where(is.numeric)))) %>%
+  arrange(desc(party_total)) %>%
+  print()
+# Occasion distribution
+cat("Occasion distribution\n")
+temp_check %>%
+  filter(!is.na(occasion_temp), occasion_temp != "other_debate") %>%#drop na and other_debate because its not included in the study
+  count(occasion_temp, name = "total") %>%#count group by occasion
+  arrange(desc(total)) %>%
+  print()
+
+# Total speeches per party 
+cat("Total by party\n")
+data_samp %>%
+  count(party, name = "total") %>%
+  arrange(desc(total)) %>%
+  print()
+
+
+# Role distribution 
+cat("Role distribution\n")
+temp_check %>% count(role_temp, sort = TRUE) %>% print()
+
+
+# Topic distribution
+cat(" Topic distribution\n")
+data_samp %>% count(top_topic, sort = TRUE)
+
+# Gender distribution
+cat("Gender distribution\n")
+data_samp %>% count(female)
+
+
+# Extract year from date and save to data_samp because date's format is '2001-10-1'
+data_samp <- data_samp %>%
+  mutate(year = as.integer(substr(date, 1, 4)))
+
+#year distribution
+cat("Year distribution\n")
+data_samp %>% count(year) %>% arrange(year) %>% print()
+```
+
+
+```{r}
+# exclude other_debate and create final occasion variable
+data_samp <- data_samp %>%
+  filter(other_debate == 0) %>%                    # exclude other debate types
+  mutate(occasion = case_when(
+    pm_questions == 1                                  ~ "PMQs",            #Prime Minister's Questions
+    m_questions == 1                                   ~ "Ministerial_Qs",  #Ministerial Questions
+    u_questions == 1                                   ~ "Urgent_Qs",       # Urgent Questions
+    queen_debate_day1 == 1 | queen_debate_others == 1  ~ "queen_Speech",    # Queen's Speech debate
+    TRUE                                               ~ NA_character_       # remaining coded as NA
+  )) %>%
+  filter(!is.na(occasion))                          # remove unclassified speeches
+
+
+data_samp <- data_samp %>%
+  mutate(role_temp = case_when(
+    prime_minister == 1                  ~ "PM",
+    cabinet == 1 | senior_minister == 1  ~ "Minister",
+    shadow == 1                          ~ "Shadow",
+    chair == 1                           ~ "Chair",
+    leader == 1                          ~ "Leader",
+    TRUE                                 ~ "Backbencher"
+  ))
+
+# Keep parties with ≥400 total speeches
+data_samp <- data_samp %>%
+  filter(party %in% c("Conservative", "Labour",
+                       "Liberal Democrats", "Scottish National Party"))
+
+
+# Create government status variable (1 = governing, 0 = opposition)
+# labour governed 2001-2010, conservatives 2010-2019, Lib Dems in coalition 2010-2015
+data_samp <- data_samp %>%
+  mutate(gov_status = case_when(
+    party == "Labour"            & year >= 2001 & year <= 2010 ~ 1,
+    party == "Conservative"      & year >= 2010 & year <= 2019 ~ 1,
+    party == "Liberal Democrats" & year >= 2010 & year <= 2015 ~ 1,
+    TRUE ~ 0                                                      
+  ))
+
+
+# Create role variable as control in the model. 
+data_samp <- data_samp %>%
+  mutate(role = role_temp) %>%
+  filter(role != "Chair") %>%            
+  # exclude Speaker: procedural speech, not party-affiliated
+  mutate(
+    role = ifelse(role == "Leader", "Backbencher", role),
+    # Leader sample too small, put into Backbencher
+    role = factor(role, levels = c("Backbencher", "PM", "Minister", "Shadow"))
+  )
+
+
+# exclude speeches with no topic label
+# Only 15 no topic speeches, too small
+data_samp <- data_samp %>%
+  filter(top_topic != "no topic") %>%
+  mutate(top_topic = factor(top_topic))  
+
+#telling the model these are category variables not numeric
+
+data_samp <- data_samp %>%
+  mutate(
+    party     = factor(party),
+    occasion  = factor(occasion),
+    debate_id = as.character(date)
+  ) %>%
+  select(-role_temp)  # remove temp variable
+
+#final size and distribution
+cat("Final sample size:", nrow(data_samp), "\n")
+
+cat("Final party × occasion distribution\n")
+data_samp %>%
+  count(party, occasion) %>%
+  pivot_wider(names_from = occasion, values_from = n, values_fill = 0) %>%
+  mutate(party_total = rowSums(across(where(is.numeric)))) %>%
+  print()
+```
+
+```{r}
+# text cleaning
+
+data_samp <- data_samp %>%
+  mutate(text_clean = text %>%
+    str_remove_all("\\[.*?\\]") %>%      #  remove editorial notes(I did not see it in the text but just in case)
+    str_remove_all("<.*?>") %>%           # remove HTML tags(i did not see it in the text but just in case )
+    str_to_lower() %>%                    # convert to lowercase
+    str_replace_all("\\b\\d+\\b", "<num>") %>%  # replace numbers with placeholder
+    str_remove_all("[^a-z\\s<>]") %>%    # remove punctuation
+    str_squish()                          # remove extra blankspace
+  ) %>%
+  mutate(tokens_clean = str_count(text_clean, "\\S+")) %>%  # recount tokens
+  filter(tokens_clean >= 30)# exclude very short texts for index stability
+
+cat("Sample size after text cleaning:", nrow(data_samp), "\n")
+
+# Create log_tokens control variable
+data_samp <- data_samp %>%
+  mutate(log_tokens = log(tokens_clean))
+```
+
+
+```{r}
+#semantic complexity
+# Define function : four indices for a single piece of text
+
+calc_complexity <- function(text) { #define function for text
+  
+  tokens <- unlist(str_split(text, "\\s+")) #tokenize by blankspace or shift, get a list
+  tokens <- tokens[tokens != ""]#remove blank str that may generate after tokenize 
+  n_tokens <- length(tokens) #length of token 
+  n_types  <- length(unique(tokens))#amount of unique types
+  
+
+  # TTR: type-token ratio, proportion of unique words
+  ttr <- n_types / n_tokens
+
+  #MTLD: length-robust measure of lexical diversity
+  calc_mtld <- function(tokens, threshold = 0.72) {
+
+  #threshold = TTR cutoff, default 0.72
+
+    factor_count <- 0 # counter for completed factor
+    start <- 1 #starting index of the current segment
+    for (i in seq_along(tokens)) {
+      segment  <- tokens[start:i]# the segment from start up to current position i
+      ttr_seg  <- length(unique(segment)) / length(segment)
+      if (ttr_seg <= threshold) {
+        factor_count <- factor_count + 1
+        start <- i + 1# once TTR drops to/below threshold, this segment is spent.count this as one complete factor.reset to next token, begin a new segment
+      }
+    }
+    if (start <= length(tokens)) { #if there are tokens left after last complete factor,put remaining tokens together as the final partial segment then compute TTR
+
+      segment  <- tokens[start:length(tokens)]
+      ttr_seg  <- length(unique(segment)) / length(segment)
+      factor_count <- factor_count + (1 - ttr_seg) / (1 - threshold)
+    }
+    return(n_tokens / factor_count)
+  }
+  mtld <- tryCatch(calc_mtld(tokens), error = function(e) NA)#if it errors, return NA
+  
+  #Yule's I: lexical richness, lower = more diverse
+  freq_table <- table(tokens)#count how many times each unique word appears
+  m1 <- sum(freq_table)#sum of all frequencies( total token count
+  m2 <- sum(freq_table^2)#sum of squared frequencies. word with high frequency will become extremely big after sqaure
+  yule_i <- (m2 - m1) / (m1^2)
+  
+
+  #Semantic entropy: unpredictability of word distribution
+  p       <- as.numeric(freq_table) / n_tokens#Shannon entropy, normalized to 0–100 scale.  probability × log(probability)
+  entropy <- -100 * sum(p * log(p)) / log(n_tokens)
+  
+  return(c(ttr = ttr, mtld = mtld, yule_i = yule_i, entropy = entropy))#return and put four results together
+}
+
+
+# Apply to all speeches row by row
+results  <- t(sapply(data_samp$text_clean, calc_complexity))
+data_samp <- cbind(data_samp, results)
+cat("Done\n")
+
+
+# Replace Inf in MTLD with na (occurs when text has no repeated words)
+data_samp <- data_samp %>%
+  mutate(mtld = ifelse(is.infinite(mtld), NA, mtld))
+
+cat("NA count in MTLD:", sum(is.na(data_samp$mtld)), "\n")
+```
+
+```{r}
+# complexity score
+
+
+# Reverse-code Yule's I so higher means more complex
+data_samp <- data_samp %>%
+  mutate(yule_i_rev = -1 * yule_i)
+
+
+# Z-standardize four indicators
+data_samp <- data_samp %>%
+  mutate(
+    z_ttr      = scale(ttr)[, 1],
+    z_mtld     = scale(mtld)[, 1],
+    z_yule_rev = scale(yule_i_rev)[, 1],
+    z_entropy  = scale(entropy)[, 1]
+  )
+
+
+# correlation matrix to validate four indicators are telling the same dimension i.e calculating semanic complexity
+cor_matrix <- cor(
+  data_samp[, c("z_ttr", "z_mtld", "z_yule_rev", "z_entropy")],
+  use = "complete.obs"
+)
+print(round(cor_matrix, 3))
+
+# Single-factor exploratory factor analysis
+fa_result <- fa(
+  data_samp[, c("z_ttr", "z_mtld", "z_yule_rev", "z_entropy")],
+  nfactors = 1,
+  rotate   = "none",
+  fm       = "ml",
+  missing  = TRUE   #just in case for NAs in MTLD
+)
+
+#factor loadings
+print(fa_result$loadings)
+
+# Extract factor scores and re-standardize
+data_samp$complexity <- fa_result$scores[, 1]
+data_samp$complexity <- scale(data_samp$complexity)[, 1]
+
+summary(data_samp$complexity)
+```
+
+```{r}
+#descriptive statistics
+
+#mean complexity by party
+data_samp %>%
+  group_by(party) %>%
+  summarise(
+    mean_complexity = mean(complexity, na.rm = TRUE),
+    se = sd(complexity, na.rm = TRUE) / sqrt(n()),#standard error
+    n  = n()#sample amount
+  )
+
+# mean complexity by occasion
+data_samp %>%
+  group_by(occasion) %>%
+  summarise(
+    mean_complexity = mean(complexity, na.rm = TRUE),#same as above standard error and amount of sample
+    se = sd(complexity, na.rm = TRUE) / sqrt(n()),
+    n  = n()
+  )
+
+# mean complexity by party * occasion
+data_samp %>%
+  group_by(party, occasion) %>%
+  summarise(
+    mean_complexity = mean(complexity, na.rm = TRUE),
+    se = sd(complexity, na.rm = TRUE) / sqrt(n()),
+    n  = n(),
+    .groups = "drop"
+  )
+```
+
+```{r}
+#Visualization
+# plot data
+plot_data <- data_samp %>%
+  group_by(party, occasion) %>%
+  summarise(
+    mean_c = mean(complexity, na.rm = TRUE),
+    se     = sd(complexity, na.rm = TRUE) / sqrt(n()),#group by occasion and party result includes mean complexity and standard error
+    .groups = "drop"
+  )
+#data from party * occasion and party and occasions
+party_means <- data_samp %>%
+  group_by(party) %>%
+  summarise(party_mean = mean(complexity, na.rm = TRUE), .groups = "drop")
+occasion_means <- data_samp %>%
+  group_by(occasion) %>%
+  summarise(
+    mean_c = mean(complexity, na.rm = TRUE),
+    se     = sd(complexity, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  )
+#Figure 1: complexity by party
+p1 <- ggplot(
+  data_samp %>%
+    group_by(party) %>%
+    summarise(mean_c = mean(complexity, na.rm = TRUE),
+              se = sd(complexity, na.rm = TRUE) / sqrt(n())),
+  aes(x = party, y = mean_c, fill = party)) +#x and y axis with data .fill different colors according to party
+  geom_col(width = 0.6) + #bar chart with bars 60% wide
+  geom_errorbar(aes(ymin = mean_c - 1.96*se, ymax = mean_c + 1.96*se), width = 0.2) +#95% confidence interval
+  geom_text(aes(label = round(mean_c, 3),  # add mean value labels rounded to 3 decimal places
+                y = mean_c + 0.05),         # position slightly above the bar
+            size = 3.5) +
+  labs(title = "H1: Semantic Complexity by Party", #labels and title 
+       x = "Party", y = "Mean Complexity (z-score)") +
+  theme_minimal() +#clean theme no grids on the background
+  theme(legend.position = "none")
+#  Figure 2: complexity by occasion
+p2 <- ggplot(occasion_means, aes(x = occasion, y = mean_c, fill = occasion)) +
+  geom_col(width = 0.6) +
+  geom_errorbar(aes(ymin = mean_c - 1.96*se, ymax = mean_c + 1.96*se), width = 0.2) +
+  geom_text(aes(label = round(mean_c, 3),  # add mean value labels
+                y = mean_c + 0.05),         # position slightly above the bar
+            size = 3.5) +
+  labs(title = "H2: Semantic Complexity by Occasion",
+       x = "Occasion", y = "Mean Complexity (z-score)") +
+  theme_minimal() +
+  theme(legend.position = "none") #the command are same as above only x and y changed
+# Figure 3: party * occasion interaction
+p3 <- ggplot(plot_data, aes(x = occasion, y = mean_c, color = party, group = party)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = mean_c - 1.96*se, ymax = mean_c + 1.96*se), width = 0.15) +
+  geom_text(aes(label = round(mean_c, 3)),  # add mean value labels at each point
+            vjust = -1,                      # position above each point
+            size = 3) +
+  geom_hline(data = party_means,
+             aes(yintercept = party_mean, color = party),
+             linetype = "dashed", linewidth = 0.5) +
+  labs(title = "H3: Complexity by Party × Occasion",
+       x = "Occasion", y = "Mean Complexity (z-score)", color = "Party") +
+  theme_minimal()
+print(p1)
+print(p2)
+print(p3)
+```
+
+```{r}
+
+#Main model H1 & H2
+
+
+# Linear mixed-effects model
+# Fixed effects: party * occasion interaction + all control variables
+# Random effects: speaker random intercept + debate random intercept
+m_full <- lmer(
+  complexity ~ party * occasion + log_tokens + year + role +
+    female + top_topic + gov_status + (1 | id_mp) + (1 | debate_id),
+  data = data_samp,
+  REML = FALSE  
+)
+
+
+# ANOVA test result
+anova(m_full)
+
+```
+```{r}
+# compare the complexity difference between governing and opposition party
+m_gov <- lmer(
+  complexity ~ party + log_tokens + year + role +
+    female + top_topic + (1 | id_mp) + (1 | debate_id),
+  data = data_samp %>% filter(gov_status == 1),
+  REML = FALSE
+)
+
+m_opp <- lmer(
+  complexity ~ party + log_tokens + year + role +
+    female + top_topic + (1 | id_mp) + (1 | debate_id),
+  data = data_samp %>% filter(gov_status == 0),
+  REML = FALSE
+)
+
+cat("Governing parties\n")
+anova(m_gov)["party",]
+
+cat("Opposition parties\n")
+anova(m_opp)["party",]
+```
+```{r}
+# compare party's text's complexity within same topic
+m_topic <- lmer(
+  complexity ~ party * top_topic + log_tokens + year + role +
+    female + gov_status + (1 | id_mp) + (1 | debate_id),
+  data = data_samp,
+  REML = FALSE
+)
+
+anova(m_topic)["party",]
+emmeans(m_topic, pairwise ~ party | top_topic, adjust = "tukey")
+```
+
+
+```{r}
+#H3 models
+#Test whether complexity varies across occasions within each party so do the occasion effect seperately for each party
+ 
+# Conservative
+m_con <- lmer(
+  complexity ~ occasion + log_tokens + year + role +
+    female + top_topic + gov_status + (1 | id_mp) + (1 | debate_id),
+  data = data_samp %>% filter(party == "Conservative"),#only filter data when party is conservative 
+  REML = FALSE
+)
+cat("Conservative")
+print(anova(m_con)["occasion", ])  #only show occasion row
+
+# labour
+m_lab <- lmer(
+  complexity ~ occasion + log_tokens + year + role +
+    female + top_topic + gov_status + (1 | id_mp) + (1 | debate_id),
+  data = data_samp %>% filter(party == "Labour"),#only filter data when party is labour
+  REML = FALSE
+)
+cat(" Labour\n")
+print(anova(m_lab)["occasion", ])
+
+#Liberal Democrats
+m_ld <- lmer(
+  complexity ~ occasion + log_tokens + year + role +
+    female + top_topic + gov_status + (1 | id_mp) + (1 | debate_id),
+  data = data_samp %>% filter(party == "Liberal Democrats"),
+  REML = FALSE#only filter data when party is Liberal Democrats
+)
+cat("Liberal Democrats\n")
+print(anova(m_ld)["occasion", ])
+snp_data <- data_samp %>% #create data only with SNP
+  filter(party == "Scottish National Party") %>%
+  droplevels()
+# Scottish National Party
+m_snp <- lmer(
+  complexity ~ occasion + log_tokens + year + #controls changed because some of them are not enough to run the model after filtering data only = SNP
+    female + top_topic + (1 | id_mp) + (1 | debate_id),
+  data = snp_data,
+  REML = FALSE
+)
+cat("Scottish National Party\n")
+anova(m_snp)
+```
+
+```{r}
+
+# Export model results as PNG tables
+# in this chunk what i basically do is first calculate the model for h1-3 and the post-hoc test(to test between two) and then use gf package to generate the result in png 
+
+library(gt)
+library(webshot2)  #save gt tables as PNG
+
+# Main model ANOVA 
+anova_main <- as.data.frame(anova(m_full)) %>%
+  rownames_to_column("Variable") %>%
+  mutate( #create new columns include f value p value etc.
+    `F value` = round(`F value`, 3),
+    `Pr(>F)`  = ifelse(`Pr(>F)` < .001, "< .001", round(`Pr(>F)`, 3)),
+    across(c(`Sum Sq`, `Mean Sq`), ~ round(.x, 2))
+  )
+
+gt(anova_main) %>% #use gf package to generate a table 
+  tab_header(title = "Table 1: Main Model ANOVA Results") %>% #title and column name 
+  cols_label(
+    Variable = "Variable",
+    NumDF    = "df (num)",
+    DenDF    = "df (den)",
+    `F value` = "F",
+    `Pr(>F)`  = "p"
+  ) %>%
+  gtsave("table1_main_anova.html")
+
+#H3 within-party occasion effects
+h3_summary <- data.frame(
+  Party    = c("Conservative", "Labour", "Liberal Democrats", "Scottish National Party"),# for h3 we use each party separately to build the model , the result includes F value,number,degree free and p value. P and F value are relatively important when we check the result
+  F_value  = c(                                   
+    round(anova(m_con)["occasion", "F value"], 3),
+    round(anova(m_lab)["occasion", "F value"], 3),
+    round(anova(m_ld)["occasion", "F value"], 3),
+    round(anova(m_snp)["occasion", "F value"], 3)
+  ),
+  df_num   = c(
+    anova(m_con)["occasion", "NumDF"],
+    anova(m_lab)["occasion", "NumDF"],
+    anova(m_ld)["occasion", "NumDF"],
+    anova(m_snp)["occasion", "NumDF"]
+  ),
+  df_den   = c(
+    round(anova(m_con)["occasion", "DenDF"], 1),
+    round(anova(m_lab)["occasion", "DenDF"], 1),
+    round(anova(m_ld)["occasion", "DenDF"], 1),
+    round(anova(m_snp)["occasion", "DenDF"], 1)
+  ),
+  p_value  = c(
+    ifelse(anova(m_con)["occasion", "Pr(>F)"] < .001, "< .001",
+           round(anova(m_con)["occasion", "Pr(>F)"], 3)),
+    ifelse(anova(m_lab)["occasion", "Pr(>F)"] < .001, "< .001",
+           round(anova(m_lab)["occasion", "Pr(>F)"], 3)),
+    ifelse(anova(m_ld)["occasion", "Pr(>F)"] < .001, "< .001",
+           round(anova(m_ld)["occasion", "Pr(>F)"], 3)),
+    ifelse(anova(m_snp)["occasion", "Pr(>F)"] < .001, "< .001",
+           round(anova(m_snp)["occasion", "Pr(>F)"], 3))
+  )
+)
+
+gt(h3_summary) %>%
+  tab_header(title = "Table 2: H3 Within-Party Occasion Effects") %>%
+  cols_label(
+    Party   = "Party",
+    F_value = "F",        
+    df_num  = "df (num)",
+    df_den  = "df (den)",
+    p_value = "p"
+  ) %>%
+  tab_style(#set some types 
+    style = cell_text(weight = "bold"),
+    locations = cells_body(
+      columns = p_value,
+      rows    = p_value %in% c("< .001", "0.005") #for p significant make it in bold 
+    )
+  ) %>%
+  gtsave("table2_h3_within_party.html")
+
+cat("All tables saved as PNG\n")
+```
+
+```{r}
+# robustness check1  :role : keep chair and examine leader and backbencher separately
+#re set the role variable and run the model again 
+data_robust_role <- data_samp %>%
+  mutate(role = case_when(
+    prime_minister == 1 ~ "PM",
+    cabinet == 1 | senior_minister == 1 ~ "Minister",
+    shadow == 1 ~ "Shadow",
+    chair == 1 ~ "Chair",
+    leader == 1 ~ "Leader",
+    TRUE ~ "Backbencher"
+  ),
+  role = factor(role))
+
+m_robust_role <- lmer(
+  complexity ~ party * occasion + log_tokens + year + role + female +
+    top_topic + gov_status + (1 | id_mp) + (1 | debate_id),
+  data = data_robust_role,
+  REML = FALSE
+)
+
+anova(m_robust_role)
+```
+```{r}
+# robustness check2:exclude SNP and set higher threshold token >50
+#reset the filter criteria: exclude SNP and keep tokens >50 then run model 
+data_robust_token <- data_samp %>%
+  filter(party != "Scottish National Party",
+         tokens_clean >= 50)
+
+m_robust_token <- lmer(
+  complexity ~ party * occasion + log_tokens + year + role + female +
+    top_topic + gov_status + (1 | id_mp) + (1 | debate_id),
+  data = data_robust_token,
+  REML = FALSE
+)
+
+anova(m_robust_token)
+
+```
+
+```{r}
+
+# Define parliamentary procedural phrases to remove
+# I turn the text into lowercase so i use lowercase in the dictionary
+parliamentary_phrases <- c(
+  "mr speaker",
+  "madam speaker", 
+  "mr deputy speaker",
+  "madam deputy speaker",
+  "the honourable member",
+  "the right honourable member",
+  "the honourable gentleman",
+  "the honourable lady",
+  "the right honourable gentleman",
+  "the right honourable lady",
+  "my honourable friend",
+  "my right honourable friend",
+  "the secretary of state",
+  "i thank the minister",
+  "i thank the honourable",
+  "i beg to move",
+  "i rise to",
+  "may i ask",
+  "will the minister",
+  "will the secretary"
+)
+#clean data remove all procedural words or phrases 
+pattern <- stringr::regex(paste(parliamentary_phrases, collapse = "|"), ignore_case = TRUE)
+
+data_robust_sw <- data_samp %>%
+  mutate(text_robust = text_clean %>%
+    str_remove_all(pattern) %>%#remove 
+    str_squish(),
+    tokens_robust = str_count(text_robust, "\\S+") 
+  ) %>%
+  filter(tokens_robust >= 30) #filter token < 30 they are too short 
+
+# calculate four indicators
+results_robust <- t(sapply(data_robust_sw$text_robust, calc_complexity))
+colnames(results_robust) <- c("ttr2", "mtld2", "yule_i2", "entropy2")
+data_robust_sw <- cbind(data_robust_sw, results_robust)
+
+# turn inf to na
+data_robust_sw <- data_robust_sw %>%
+  mutate(mtld2 = ifelse(is.infinite(mtld2), NA, mtld2))
+
+# z-score standardlization
+data_robust_sw <- data_robust_sw %>%
+  mutate(
+    yule_i_rev2 = -1 * yule_i2,
+    z_ttr = scale(ttr2)[,1],
+    z_mtld = scale(mtld2)[,1],
+    z_yule_rev = scale(yule_i_rev2)[,1],
+    z_entropy = scale(entropy2)[,1]
+  )
+
+# Single-factor exploratory factor analysis
+fa_robust <- fa(
+  data_robust_sw[, c("z_ttr", "z_mtld", "z_yule_rev", "z_entropy")],
+  nfactors = 1, rotate = "none", fm = "ml", missing = TRUE
+)
+
+data_robust_sw$complexity <- scale(fa_robust$scores[,1])[,1]
+
+cat("finish\n")#so i can know if the process finish
+```
+```{r}
+#use the data run model again 
+m_robust_sw <- lmer(
+  complexity ~ party * occasion + log_tokens + year + role + female +
+    top_topic + gov_status + (1 | id_mp) + (1 | debate_id),
+  data = data_robust_sw,
+  REML = FALSE
+)
+
+anova(m_robust_sw)
+```
+
+
+
+```{r}
+
+# Robustness check 123 for H3
+
+# Robustness 1
+
+for(p in c("Conservative", "Labour", "Liberal Democrats", "Scottish National Party")) {
+  cat(" Robust 1 -", p, "\n")
+  d <- data_robust_role %>% 
+    filter(party == p) %>% # check h3 for each party one by one 
+    droplevels()
+  m <- lmer(
+    complexity ~ occasion + log_tokens + year + role +
+      female + top_topic + gov_status + (1 | id_mp) + (1 | debate_id),
+    data = d, REML = FALSE
+  )
+  print(anova(m)["occasion", ])
+}
+
+
+# Robustness 2
+for(p in c("Conservative", "Labour", "Liberal Democrats")) {
+  cat("Robust 2 -", p, "\n")
+  d <- data_robust_token %>% 
+    filter(party == p) %>% 
+    droplevels()
+  m <- lmer(
+    complexity ~ occasion + log_tokens + year + role +
+      female + top_topic + gov_status + (1 | id_mp) + (1 | debate_id),
+    data = d, REML = FALSE
+  )
+  print(anova(m)["occasion", ])
+}
+
+
+# Robustness 3
+for(p in c("Conservative", "Labour", "Liberal Democrats")) {
+  cat("Robust 3 -", p, "\n")
+  d <- data_robust_sw %>% 
+    filter(party == p) %>% 
+    droplevels()
+  m <- lmer(
+    complexity ~ occasion + log_tokens + year + role +
+      female + top_topic + gov_status + (1 | id_mp) + (1 | debate_id),
+    data = d, REML = FALSE
+  )
+  print(anova(m)["occasion", ])
+}
+
+cat("Robust 3 SNP\n")
+d_snp <- data_robust_sw %>% 
+  filter(party == "Scottish National Party") %>% 
+  droplevels()
+
+
+cat("role levels:", nlevels(d_snp$role), "\n")
+cat("gov_status levels:", nlevels(factor(d_snp$gov_status)), "\n")
+
+m_snp_r3 <- lmer(
+  complexity ~ occasion + log_tokens + year +
+    female + top_topic + (1 | id_mp) + (1 | debate_id),
+  data = d_snp, REML = FALSE
+)
+print(anova(m_snp_r3)["occasion", ])
+```
+```{r}
+#for queen speech: it has the lowest complexity and i try to figure it out why. So i compare the ttr and entropy(they examine the diversity of words)
+data_samp %>%
+  group_by(occasion) %>%#group by occasion
+  summarise(
+    mean_ttr = mean(ttr, na.rm = TRUE),
+    mean_entropy = mean(entropy, na.rm = TRUE)
+  )
+```
+
+```{r}
+#check the length of speech for each occasion. because longer speech tend to have lower ttr(because some words may repeat
+data_samp %>%
+  group_by(occasion) %>%
+  summarise(
+    mean_tokens = mean(tokens_clean, na.rm = TRUE),
+    median_tokens = median(tokens_clean, na.rm = TRUE)
+  )
+```
+
+```{r}
+#distribution of SNP's role at queen speech
+data_samp %>%
+  filter(party == "Scottish National Party", occasion == "queen_Speech") %>%
+  count(role)
+```
+
